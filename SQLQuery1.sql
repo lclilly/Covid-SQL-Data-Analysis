@@ -1,31 +1,43 @@
--- Selecting data we're going to use
+-- Showing countries with highest death count per population
+Select location, MAX(total_deaths) as TotalDeathCount
+From CovidProject.dbo.CovidDeaths
+Group by location
+Order by TotalDeathCount desc
+-- Recognizing total deaths column as an integer so that it can display the total death count in proper desc order/cast function
+Select location, MAX(cast(total_deaths as int)) as TotalDeathCount
+From CovidProject.dbo.CovidDeaths
+Group by location
+Order by TotalDeathCount desc
+-- Some locations displayed are continents, because we had nulls in our continent fields, so it's picking up the continents as locations
+-- To fix this, we specify with a where statement
+Select location, MAX(cast(total_deaths as int)) as TotalDeathCount
+From CovidProject.dbo.CovidDeaths
+Where continent is not null
+Group by location
+Order by TotalDeathCount desc
+-- Breaking things down by continent
+Select continent, MAX(cast(total_deaths as int)) as TotalDeathCount
+From CovidProject.dbo.CovidDeaths
+Where continent is not null
+Group by continent
+Order by TotalDeathCount desc
 
-Select location, date, total_cases, new_cases, total_deaths, population
+Select location, MAX(cast(total_deaths as int)) as TotalDeathCount
 From CovidProject.dbo.CovidDeaths
-Order by 1,2
--- Looking at total_cases v/s total_deaths- Likelihood of dying if you contract Covid
-Select location, date, total_cases, total_deaths, (total_deaths/total_cases)*100 as DeathPercentage
-From CovidProject.dbo.CovidDeaths
-Order by 1,2
--- Specifying location
-Select location, date, total_cases, total_deaths, (total_deaths/total_cases)*100 as DeathPercentage
-From CovidProject.dbo.CovidDeaths
-Where location like '%states%'
-Order by 1,2
-Select location, date, total_cases, total_deaths, (total_deaths/total_cases)*100 as DeathPercentage
-From CovidProject.dbo.CovidDeaths
-Where location like '%kenya%'
-Order by 1,2
+Where continent is null
+Group by location
+Order by TotalDeathCount desc
 
--- Total cases v/s population
--- Shows what percentage of population got Covid
-Select location, date, population, total_cases, (total_cases/population)*100 as CovidPercentage
+-- Global Numbers
+-- Death percentage per day
+Select date, SUM(new_cases) as TotalCases, SUM(cast(new_deaths as int)) as TotalDeaths, SUM(cast(new_deaths as int))/SUM(new_cases)*100 as DeathPercentage
 From CovidProject.dbo.CovidDeaths
-Where location like '%kenya%'
-Order by 1,2
+Where continent is not null
+Group by date
+Order by 1, 2
 
--- Countries with highest infection rates compared to population
-Select location, population, MAX(total_cases) as HighestInfectionCount, MAX(total_cases/population)*100 as PercentPopulationInfected
+
+Select continent
 From CovidProject.dbo.CovidDeaths
-Group by location, population
-Order by PercentPopulationInfected desc
+
+
