@@ -89,6 +89,66 @@ Where dea.continent is not null
 )
 Select*
 From PopvsVac
+-- Display continent, location, population, new vaccinations, rolling people vaccinated and the percentage of the rolling people vaccinated from the whole population
+With PopvsVac (Continent, Location, Date, Population, New_Vaccinations, RollingPeopleVaccinated)
+as
+(
+Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, SUM(CONVERT(int, vac.new_vaccinations)) OVER (Partition by dea.location Order by dea.location, dea.date) as RollingPeopleVaccinated
+From CovidProject.dbo.CovidDeaths dea
+Join CovidProject.dbo.CovidVaccinations vac
+On dea.location = vac.location and dea.date = vac.date
+Where dea.continent is not null
+)
+Select*, (RollingPeopleVaccinated/Population)*100
+From PopvsVac
+-- Using temptables
+-- Rolling percentage of the popln vacc'd for each location over time, based on data from Covid-19 deaths and vacc tables
+Create Table #PercentPopulationVaccinated
+(
+Continent nvarchar(255),
+Location nvarchar(255),
+Date datetime,
+Population numeric,
+New_Vaccinations numeric,
+RollingPeopleVaccinated numeric
+)
+Insert into #PercentPopulationVaccinated
+Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, SUM(CONVERT(int, vac.new_vaccinations)) OVER (Partition by dea.location Order by dea.location, dea.date) as RollingPeopleVaccinated
+From CovidProject.dbo.CovidDeaths dea
+Join CovidProject.dbo.CovidVaccinations vac
+On dea.location = vac.location and dea.date = vac.date
+Where dea.continent is not null
+Select*, (RollingPeopleVaccinated/Population)*100
+From #PercentPopulationVaccinated
+-- If you want to run the same query multiple times using the same table or alter the query a little bit, use Drop Table if exists
+Drop Table if exists #PercentPopulationVaccinated
+Create Table #PercentPopulationVaccinated
+(
+Continent nvarchar(255),
+Location nvarchar(255),
+Date datetime,
+Population numeric,
+New_Vaccinations numeric,
+RollingPeopleVaccinated numeric
+)
+Insert into #PercentPopulationVaccinated
+Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, SUM(CONVERT(int, vac.new_vaccinations)) OVER (Partition by dea.location Order by dea.location, dea.date) as RollingPeopleVaccinated
+From CovidProject.dbo.CovidDeaths dea
+Join CovidProject.dbo.CovidVaccinations vac
+On dea.location = vac.location and dea.date = vac.date
+Where dea.continent is not null
+Select*, (RollingPeopleVaccinated/Population)*100
+From #PercentPopulationVaccinated
+-- Creating view to store data for later visualization
+Create view PercentPopulationVaccinated as
+Select dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, SUM(CONVERT(int, vac.new_vaccinations)) OVER (Partition by dea.location Order by dea.location, dea.date) as RollingPeopleVaccinated
+From CovidProject.dbo.CovidDeaths dea
+Join CovidProject.dbo.CovidVaccinations vac
+On dea.location = vac.location and dea.date = vac.date
+Where dea.continent is not null
+-- A view is permanent, not like a temp table
+Select*
+From PercentPopulationVaccinated
 
 
 
